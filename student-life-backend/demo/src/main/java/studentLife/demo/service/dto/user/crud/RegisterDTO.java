@@ -25,6 +25,9 @@ public class RegisterDTO {
         userEntity.setId(registerDTO.getId());
         userEntity.setUserName(registerDTO.getUserName());
         userEntity.setEmail(registerDTO.getEmail());
+        userEntity.setUniversity(registerDTO.getUniversity());
+        userEntity.setMajor(registerDTO.getMajor());
+        userEntity.setYearOfStudy(registerDTO.getYearOfStudy());
         userEntity.setPassword(registerDTO.getPassword());
         userEntity.setRePassword(registerDTO.getRePassword());
         return userEntity;
