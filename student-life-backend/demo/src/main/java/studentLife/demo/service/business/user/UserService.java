@@ -4,24 +4,37 @@ import org.hibernate.service.spi.ServiceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import studentLife.demo.domain.file.FileEntity;
 import studentLife.demo.domain.user.UserEntity;
+import studentLife.demo.repository.file.FileRepository;
 import studentLife.demo.repository.user.UserRepository;
 import studentLife.demo.security.JwtUtil;
 import studentLife.demo.service.ResponseDTO;
 import studentLife.demo.service.base.BaseService;
+import studentLife.demo.service.dto.file.FileDTO;
 import studentLife.demo.service.dto.user.UserDTO;
 import studentLife.demo.service.dto.user.crud.LoginDTO;
 import studentLife.demo.service.dto.user.crud.LoginResponseDTO;
 import studentLife.demo.service.dto.user.crud.RegisterDTO;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService extends BaseService {
     private final UserRepository userRepository;
+    private final FileRepository fileRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, FileRepository fileRepository) {
         this.userRepository = userRepository;
+        this.fileRepository = fileRepository;
     }
 
     public ResponseDTO<UserDTO> registerUser(RegisterDTO registerDTO) {
@@ -121,6 +134,92 @@ public class UserService extends BaseService {
         response.setStatus("200");
         response.setData("Đổi mật khẩu thành công");
         return response;
+    }
+
+    // trả về url ( lộ hết file cấu trúc proj :)))))
+//    @Transactional
+//    public ResponseDTO<UserDTO> uploadAvatar(String username, MultipartFile file) {
+//        UserEntity user = userRepository.findByUserName(username)
+//                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+//
+//        try {
+//
+//            String contentType = file.getContentType();
+//            if (contentType == null || !contentType.startsWith("image")) {
+//                throw new RuntimeException("File này không phải là file ảnh");
+//            }
+//
+//
+//            String uploadDir = "uploads/";
+//
+//            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+//
+//            Path dirPath = Paths.get(uploadDir);
+//            Files.createDirectories(dirPath);
+//
+//            Path filePath = dirPath.resolve(fileName);
+//
+//            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+//
+//            user.setAvataUrl(filePath.toString());
+//            userRepository.save(user);
+//
+//            return ResponseDTO.<UserDTO>builder()
+//                    .status("200")
+//                    .message("Upload ảnh thành công")
+//                    .data(UserDTO.toDTO(user))
+//                    .build();
+//
+//        } catch (IOException e) {
+//            throw new RuntimeException("Lỗi khi upload file: " + e.getMessage(), e);
+//        }
+//    }
+
+
+
+    public ResponseDTO<FileDTO> uploadFile(String userName, MultipartFile file){
+        UserEntity user = userRepository.findByUserName(userName)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+
+        try {
+            if(file.getContentType() == null || !file.getContentType().startsWith("image")){
+                throw new RuntimeException("File này không phải là file ảnh");
+            }
+
+            String uploadDir = "upload/";
+            Files.createDirectories(Paths.get(uploadDir));
+
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(uploadDir).resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            FileEntity fileEntity = new FileEntity();
+            fileEntity.setFileName(file.getOriginalFilename());
+            fileEntity.setFilePath(filePath.toString());
+            fileEntity.setFileType(file.getContentType());
+            fileEntity.setTargetId(user.getId());
+
+            FileEntity fileSave = fileRepository.save(fileEntity);
+            user.setAvataUrl(fileSave.getId());
+            userRepository.save(user);
+
+            FileDTO fileDTO = FileDTO.builder()
+                    .id(fileSave.getId())
+                    .fileName(fileSave.getFileName())
+                    .filePath(fileSave.getFilePath())
+                    .fileType(fileSave.getFileType())
+                    .targetId(fileSave.getTargetId())
+                    .build();
+
+            return ResponseDTO.<FileDTO>builder()
+                    .status("200")
+                    .message("Upload file thành công")
+                    .data(fileDTO)
+                    .build();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi upload file: " + e.getMessage(), e);
+        }
     }
 
 

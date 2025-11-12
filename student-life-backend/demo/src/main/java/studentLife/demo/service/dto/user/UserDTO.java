@@ -19,6 +19,7 @@ public class UserDTO extends AbstractDTO<String> {
     private Integer yearOfStudy;
     private String password;
     private String rePassword;
+    private String avataUrl;
 
     public static UserDTO toDTO(UserEntity userEntity) {
         if(userEntity == null) return null;
@@ -36,6 +37,7 @@ public class UserDTO extends AbstractDTO<String> {
         userDTO.setCreatedDate(userEntity.getCreatedDate());
         userDTO.setLastModifiedBy(userEntity.getLastModifiedBy());
         userDTO.setLastModifiedDate(userEntity.getLastModifiedDate());
+        userDTO.setAvataUrl(userEntity.getAvataUrl());
         return userDTO;
     }
 

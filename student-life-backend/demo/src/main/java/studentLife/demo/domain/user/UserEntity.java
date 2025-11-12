@@ -39,6 +39,8 @@ public class UserEntity extends AbstractEntity implements Serializable {
     private String password;
     @Column(name = "repassword")
     private String rePassword;
+    @Column(name= "avata_url")
+    private String avataUrl;
 
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
